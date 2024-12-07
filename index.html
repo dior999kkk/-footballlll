@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק דורון מס - השער</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #2ecc71;
+            flex-direction: column;
+        }
+        #game-container {
+            width: 350px;
+            height: 500px;
+            border: 5px solid white;
+            position: relative;
+            overflow: hidden;
+            background-color: #3498db;
+        }
+        #goal {
+            width: 200px;
+            height: 100px;
+            border: 5px solid white;
+            position: absolute;
+            top: 50px;
+            left: 75px;
+            background-color: rgba(255,255,255,0.2);
+        }
+        #ball {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 50px;
+            left: 155px;
+            cursor: grab;
+            z-index: 10;
+        }
+        #ball:active {
+            cursor: grabbing;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 18px;
+            text-align: center;
+            color: white;
+        }
+        .player {
+            margin: 10px;
+            padding: 10px;
+            border: 2px solid white;
+            display: inline-block;
+            color: white;
+        }
+        .red-light {
+            background-color: red;
+        }
+        .gold-trophy {
+            background-color: gold;
+            color: black;
+        }
+        #score {
+            color: white;
+            font-size: 20px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="goal"></div>
+        <div id="ball"></div>
+    </div>
+    <div id="status">הזז את הכדור לתוך השער!</div>
+    <div id="score">שחקן 1: 0 | שחקן 2: 0</div>
+    <div id="players">
+        <div id="player1" class="player">שחקן 1</div>
+        <div id="player2" class="player">שחקן 2</div>
+    </div>
+
+    <script>
+        const ball = document.getElementById('ball');
+        const gameContainer = document.getElementById('game-container');
+        const goal = document.getElementById('goal');
+        const status = document.getElementById('status');
+        const scoreElement = document.getElementById('score');
+        const player1 = document.getElementById('player1');
+        const player2 = document.getElementById('player2');
+        
+        let currentPlayer = 1;
+        let startX, startY;
+        let scores = [0, 0];
+
+        ball.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', endDrag);
+
+        function startDrag(e) {
+            startX = e.clientX;
+            startY = e.clientY;
+            ball.style.transition = 'none';
+        }
+
+        function drag(e) {
+            if (!startX) return;
+            
+            let currentX = e.clientX;
+            let currentY = e.clientY;
+            
+            let deltaX = currentX - startX;
+            let deltaY = currentY - startY;
+            
+            ball.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+        }
+
+        function endDrag(e) {
+            if (!startX) return;
+            
+            let endX = e.clientX;
+            let endY = e.clientY;
+            
+            let deltaX = endX - startX;
+            let deltaY = endY - startY;
+            
+            ball.style.transition = 'transform 0.5s ease-out';
+            ball.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+            // Check if ball is in goal
+            const ballRect = ball.getBoundingClientRect();
+            const goalRect = goal.getBoundingClientRect();
+            const isInGoal = !(
+                ballRect.right < goalRect.left ||
+                ballRect.left > goalRect.right ||
+                ballRect.bottom < goalRect.top ||
+                ballRect.top > goalRect.bottom
+            );
+
+            if (isInGoal) {
+                // Goal scored
+                status.textContent = 'גול! נקודה לשחקן!';
+                scores[currentPlayer - 1]++;
+                updateScore();
+
+                if (currentPlayer === 1) {
+                    player1.classList.add('gold-trophy');
+                    player2.classList.remove('gold-trophy');
+                } else {
+                    player2.classList.add('gold-trophy');
+                    player1.classList.remove('gold-trophy');
+                }
+            } else {
+                // Miss
+                status.textContent = 'לא נכנס לשער. נסה שוב!';
+                if (currentPlayer === 1) {
+                    player1.classList.add('red-light');
+                    player2.classList.remove('red-light');
+                } else {
+                    player2.classList.add('red-light');
+                    player1.classList.remove('red-light');
+                }
+            }
+            
+            // Reset ball position
+            setTimeout(() => {
+                ball.style.transform = 'translate(0, 0)';
+            }, 1000);
+            
+            // Switch players
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            
+            // Reset for next throw
+            startX = null;
+            startY = null;
+        }
+
+        function updateScore() {
+            scoreElement.textContent = `שחקן 1: ${scores[0]} | שחקן 2: ${scores[1]}`;
+        }
+    </script>
+</body>
+</html>
